@@ -6,8 +6,8 @@ from data.downloader import download_data
 from metrics.performance import (
     calculate_performance,
 )
-from strategies.sma_crossover import (
-    SMACrossoverStrategy,
+from strategies.mean_reversion import (
+    MeanReversionStrategy,
 )
 from visualizations.plots import (
     generate_all_charts,
@@ -30,10 +30,10 @@ def main():
         f"\nRunning strategy on: {ticker}"
     )
 
-    strategy = SMACrossoverStrategy()
+    strategy = MeanReversionStrategy()
 
     signals = strategy.generate_signals(
-        market_data[ticker]
+        market_data["AAPL"]
     )
 
     backtester = Backtester(
@@ -80,8 +80,8 @@ def main():
         equity_curve=results[
             "equity_curve"
         ],
-        strategy_name="sma",
-        ticker=ticker,
+        strategy_name="mean_reversion",
+        ticker="AAPL",
     )
 
     print("\n" + "=" * 60)
