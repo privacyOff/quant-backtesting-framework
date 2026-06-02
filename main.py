@@ -1,42 +1,100 @@
-import logging
+import argparse
 
-from config import settings
-from data.downloader import download_data
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s - %(message)s",
+from cli.commands import (
+    run_strategy,
+    run_comparison,
+    run_optimization,
+    list_strategies,
+    show_version,
 )
+
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Quant Backtester CLI"
+        )
+    )
+
+    parser.add_argument(
+        "--strategy",
+        default="sma",
+        choices=[
+            "sma",
+            "momentum",
+            "mean_reversion",
+        ],
+    )
+
+    parser.add_argument(
+        "--ticker",
+        default="AAPL",
+    )
+
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--optimize",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--list-strategies",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="store_true",
+    )
+
+    return parser.parse_args()
 
 
 def main():
 
-    market_data = download_data(
-        settings.tickers,
-        settings.start_date,
-        settings.end_date,
+    args = parse_args()
+
+    if args.version:
+
+        print(
+            show_version()
+        )
+        return
+
+    if args.list_strategies:
+
+        for strategy in (
+            list_strategies()
+        ):
+            print(strategy)
+
+        return
+
+    if args.compare:
+
+        run_comparison(
+            args.ticker
+        )
+        return
+
+    if args.optimize:
+
+        run_optimization(
+            args.ticker
+        )
+        return
+
+    run_strategy(
+        ticker=args.ticker,
+        strategy_name=(
+            args.strategy
+        ),
     )
-
-    print(
-        f"\nSuccessfully loaded "
-        f"{len(market_data)} assets."
-    )
-
-    for ticker, df in market_data.items():
-
-        print(f"\n{'=' * 60}")
-        print(ticker)
-        print(f"{'=' * 60}")
-
-        print("\nColumns:")
-        print(df.columns.tolist())
-
-        print("\nHead:")
-        print(df.head())
-
-        print("\nShape:")
-        print(df.shape)
 
 
 if __name__ == "__main__":
