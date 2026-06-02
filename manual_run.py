@@ -1,102 +1,101 @@
+import logging
 from pprint import pprint
 
 from backtester import Backtester
 from config import settings
 from data.downloader import download_data
-from metrics.performance import (
-    calculate_performance,
-)
+from metrics.performance import calculate_performance
+from reports.comparison import compare_strategies
 from strategies.mean_reversion import (
     MeanReversionStrategy,
+)
+from strategies.momentum import (
+    MomentumStrategy,
+)
+from strategies.sma_crossover import (
+    SMACrossoverStrategy,
 )
 from visualizations.plots import (
     generate_all_charts,
 )
 
 
-def main():
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s - %(message)s",
+)
 
-    print("\nDownloading data...")
 
-    market_data = download_data(
-        settings.tickers,
-        settings.start_date,
-        settings.end_date,
-    )
-
-    ticker = settings.tickers[0]
+def run_strategy(
+    strategy,
+    data,
+    backtester,
+    ticker,
+):
+    """
+    Run a single strategy end-to-end.
+    """
 
     print(
-        f"\nRunning strategy on: {ticker}"
+        f"\nRunning strategy: "
+        f"{strategy.name}"
     )
-
-    strategy = MeanReversionStrategy()
 
     signals = strategy.generate_signals(
-        market_data["AAPL"]
+        data
     )
 
-    backtester = Backtester(
-        initial_capital=100000,
-        transaction_cost=0.001,
-        position_size=1.0,
+    results = backtester.run(
+        signals
     )
-
-    results = backtester.run(signals)
 
     metrics = calculate_performance(
         results["equity_curve"],
         results["trade_history"],
     )
 
-    print("\n" + "=" * 60)
-    print("PERFORMANCE METRICS")
-    print("=" * 60)
+    chart_paths = (
+        generate_all_charts(
+            signal_df=signals,
+            equity_curve=results[
+                "equity_curve"
+            ],
+            strategy_name=(
+                strategy.name
+            ),
+            ticker=ticker,
+        )
+    )
+
+    print(
+        "\nPerformance Metrics:"
+    )
 
     pprint(metrics)
 
-    print("\n" + "=" * 60)
-    print("TRADE HISTORY")
-    print("=" * 60)
-
     print(
-        results["trade_history"].tail()
+        "\nLast 5 Trades:"
     )
 
-    print("\n" + "=" * 60)
-    print("EQUITY CURVE")
-    print("=" * 60)
-
     print(
-        results["equity_curve"][
-            [
-                "Portfolio_Value",
-            ]
+        results[
+            "trade_history"
         ].tail()
     )
 
-    chart_paths = generate_all_charts(
-        signal_df=signals,
-        equity_curve=results[
-            "equity_curve"
-        ],
-        strategy_name="mean_reversion",
-        ticker="AAPL",
+    print(
+        "\nChart Files:"
     )
 
-    print("\n" + "=" * 60)
-    print("GENERATED CHARTS")
-    print("=" * 60)
-
     pprint(chart_paths)
-
-    print("\n" + "=" * 60)
-    print("SANITY CHECKS")
-    print("=" * 60)
 
     portfolio = results[
         "equity_curve"
     ]["Portfolio_Value"]
+
+    print(
+        "\nSanity Checks:"
+    )
 
     print(
         "Contains NaN:",
@@ -104,7 +103,7 @@ def main():
     )
 
     print(
-        "Any Negative Values:",
+        "Negative Values:",
         (portfolio < 0).any(),
     )
 
@@ -113,23 +112,186 @@ def main():
         portfolio.iloc[-1],
     )
 
-    if not results[
-        "trade_history"
-    ].empty:
+    return {
+        "signals": signals,
+        "results": results,
+        "metrics": metrics,
+        "charts": chart_paths,
+    }
 
-        pnl_sum = results[
-            "trade_history"
-        ]["Trade_PnL"].sum()
+
+def main():
+
+    print(
+        "\nDownloading data..."
+    )
+
+    market_data = download_data(
+        settings.tickers,
+        settings.start_date,
+        settings.end_date,
+    )
+
+    if not market_data:
 
         print(
-            "Trade PnL Sum:",
-            pnl_sum,
+            "No data downloaded."
+        )
+
+        return
+
+    ticker = None
+    data = None
+
+    for symbol, df in (
+        market_data.items()
+    ):
+
+        if not df.empty:
+
+            ticker = symbol
+            data = df
+
+            break
+
+    if data is None:
+
+        print(
+            "No valid market data."
+        )
+
+        return
+
+    print(
+        f"\nUsing ticker: "
+        f"{ticker}"
+    )
+
+    backtester = Backtester(
+        initial_capital=100000,
+        transaction_cost=0.001,
+        position_size=1.0,
+    )
+
+    strategies = [
+        SMACrossoverStrategy(),
+        MomentumStrategy(),
+        MeanReversionStrategy(),
+    ]
+
+    all_results = {}
+
+    print(
+        "\n"
+        + "=" * 80
+    )
+
+    print(
+        "INDIVIDUAL STRATEGY RUNS"
+    )
+
+    print(
+        "=" * 80
+    )
+
+    for strategy in strategies:
+
+        strategy_output = (
+            run_strategy(
+                strategy=strategy,
+                data=data,
+                backtester=backtester,
+                ticker=ticker,
+            )
+        )
+
+        all_results[
+            strategy.name
+        ] = strategy_output
+
+    print(
+        "\n"
+        + "=" * 80
+    )
+
+    print(
+        "STRATEGY COMPARISON"
+    )
+
+    print(
+        "=" * 80
+    )
+
+    comparison_df = (
+        compare_strategies(
+            data=data,
+            strategies=strategies,
+            backtester=backtester,
+        )
+    )
+
+    print(
+        comparison_df.to_string(
+            index=False
+        )
+    )
+
+    if not comparison_df.empty:
+
+        winner = (
+            comparison_df.iloc[0]
         )
 
         print(
-            "Expected Final Value:",
-            100000 + pnl_sum,
+            "\n"
+            + "=" * 80
         )
+
+        print(
+            "TOP STRATEGY"
+        )
+
+        print(
+            "=" * 80
+        )
+
+        print(
+            f"Rank: "
+            f"{winner['Rank']}"
+        )
+
+        print(
+            f"Strategy: "
+            f"{winner['Strategy']}"
+        )
+
+        print(
+            f"Sharpe Ratio: "
+            f"{winner['Sharpe Ratio']:.4f}"
+        )
+
+        print(
+            f"Total Return: "
+            f"{winner['Total Return']:.4%}"
+        )
+
+        print(
+            f"Max Drawdown: "
+            f"{winner['Max Drawdown']:.4%}"
+        )
+
+    print(
+        "\n"
+        + "=" * 80
+    )
+
+    print(
+        "COMPLETE"
+    )
+
+    print(
+        "=" * 80
+    )
 
 
 if __name__ == "__main__":
