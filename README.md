@@ -510,8 +510,8 @@ quant-backtester/
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/quant-backtester.git
-cd quant-backtester
+git clone https://github.com/privacyOff/quant-backtesting-framework.git
+cd quant-backtesting-framework
 ```
 
 Create a virtual environment:
