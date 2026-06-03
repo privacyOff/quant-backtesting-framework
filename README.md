@@ -403,87 +403,33 @@ Generated charts include:
 
 # Results
 
+## Strategy Comparison
+
+![Strategy Comparison](docs/images/strategy_comparison.png)
+
 ## SMA Crossover Signals
 
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/sma_signals.png
-```
-
-```markdown
 ![SMA Signals](docs/images/sma_signals.png)
-```
-
----
 
 ## SMA Equity Curve
 
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/sma_equity_curve.png
-```
-
-```markdown
 ![SMA Equity Curve](docs/images/sma_equity_curve.png)
-```
-
----
 
 ## SMA Drawdown
 
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/sma_drawdown.png
-```
-
-```markdown
 ![SMA Drawdown](docs/images/sma_drawdown.png)
-```
-
----
 
 ## Momentum Signals
 
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/momentum_signals.png
-```
-
-```markdown
 ![Momentum Signals](docs/images/momentum_signals.png)
-```
-
----
 
 ## Mean Reversion Signals
 
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/mean_reversion_signals.png
-```
-
-```markdown
 ![Mean Reversion Signals](docs/images/mean_reversion_signals.png)
-```
 
----
+## MSFT Cross-Asset Example
 
-## MSFT Equity Curve
-
-> SCREENSHOT PLACEHOLDER
-
-```text
-docs/images/msft_equity_curve.png
-```
-
-```markdown
 ![MSFT Equity Curve](docs/images/msft_equity_curve.png)
-```
 
 ---
 
